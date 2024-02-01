@@ -76,13 +76,19 @@ class SlideBox(InputBox):
         pygame.draw.line(screen, self.color, (self.value, self.rect.y + 5), (self.value, self.rect.y + 45), 12)
 
     def update(self, event):
-        super().update()
         previousStart = self.start
         self.rect.x = sizeBox.rect.x + sizeBox.rect.w + 20
         self.start  = self.rect.x + 6
         self.end    = self.rect.x + self.rect.w - 6
         self.value += self.start - previousStart
         
+        self.mousePos = pygame.mouse.get_pos()
+        self.clicked  = pygame.mouse.get_pressed() != (0, 0, 0)
+        if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(self.mousePos):
+            self.isActive = True
+        if event.type == pygame.MOUSEBUTTONUP:
+            self.isActive = False
+
         if self.isActive:
             if self.clicked:
                 if self.start <= self.mousePos[0] <= self.end: self.value = self.mousePos[0]
@@ -126,9 +132,9 @@ class ButtonBox(Box):
         self.rect.x = algorithmBox.rect.x + algorithmBox.rect.w + 20
         screen.blit(self.img, (self.rect.x, self.rect.y))
 
-    def update(self):
+    def update(self, event):
        super().update()
-       if self.isActive: self.isActive = True if self.clicked else False
+       self.isActive = self.isActive and event.type == pygame.MOUSEBUTTONDOWN
 
 
 class DropdownBox(InputBox):
@@ -174,7 +180,7 @@ class DropdownBox(InputBox):
                 option_text = self.font.render(self.options[i][:12], 1, options_color)
                 screen.blit(option_text, option_text.get_rect(center=rect.center))
 
-    def update(self):
+    def update(self, event):
         self.rect.x = delayBox.rect.w + delayBox.rect.x + 20
         mouse_position = pygame.mouse.get_pos()
         column = 0
@@ -193,7 +199,7 @@ class DropdownBox(InputBox):
             if rect.collidepoint(mouse_position):
                 self.active_option = i
         
-        if pygame.mouse.get_pressed() != (0, 0, 0):
+        if event.type == pygame.MOUSEBUTTONDOWN:
             if self.isActive and self.dropdown_rect.collidepoint(mouse_position):
                 self.options[self.DEFAUTL_OPTION], self.options[self.active_option+1] =\
                      self.options[self.active_option+1], self.options[self.DEFAUTL_OPTION]
@@ -224,11 +230,11 @@ stopButton = ButtonBox('res/stopButton.png', (390, 440, 50, 50))
 def updateWidgets(event):
     sizeBox.update(event)
     delayBox.update(event)
-    algorithmBox.update()
+    algorithmBox.update(event)
     if do_sorting:
-        stopButton.update()
+        stopButton.update(event)
     else:
-        playButton.update()
+        playButton.update(event)
 
 
 def drawBars(array, redBar1, redBar2, blueBar1, blueBar2, greenRows = {}, **kwargs):
